@@ -1,82 +1,75 @@
-from pathlib import Path
-from random import choice
-import discord
-from discord.ext import commands, tasks
+import discord, asyncio, youtube_dl
+from discord.ext import commands
+import os
+from dotenv import load_dotenv
 
-status = ['sad songs for sad niBBas', 'with your waifu', 'with your hair :)']
-welcome = ['Hello there!', 'Heyyyyyyyy!', "Stfu i'm trying to concentrate", 'Konnichiwa!', 'Hello']
+load_dotenv()
 
 
-class MusicBot(commands.Bot):
-    def __init__(self):
-        self._cogs = [p.stem for p in Path(".").glob("./bot/cogs/*.py")]
-        super().__init__(command_prefix=self.prefix, case_insensitive=True)
+def get_prefix(bot, msg):
+    """A callable Prefix for our bot. This could be edited to allow per server prefixes."""
 
-    def setup(self):
-        print("Running setup...")
+    prefixes = ['.']  # Your bot prefix(s)
 
-        for cog in self._cogs:
-            self.load_extension(f"bot.cogs.{cog}")
-            print(f" Loaded `{cog}` cog.")
+    return commands.when_mentioned_or(*prefixes)(bot, msg)
 
-        print("Setup complete.")
 
-    def run(self):
-        self.setup()
+intents = discord.Intents.default()
+intents.members = True
 
-        print("Running bot...")
-        super().run(TOKEN, reconnect=True)
+bot = commands.Bot(command_prefix=get_prefix, description='A Music bot', intents=intents)
 
-    async def shutdown(self):
-        print("Closing connection to Discord...")
-        await super().close()
+exts = ['music']  # Add your Cog extensions here
 
-    async def close(self):
-        print("Closing on keyboard interrupt...")
-        await self.shutdown()
 
-    async def on_connect(self):
-        print(f" Connected to Discord (latency: {self.latency * 1000:,.0f} ms).")
+@bot.event
+async def on_ready():
+    song_name = 'yt and .help'
+    activity_type = discord.ActivityType.listening
+    await bot.change_presence(activity=discord.Activity(type=activity_type, name=song_name))
+    print(f'We have logged in as {bot.user}')
+    print("Bot ready.")
 
-    async def on_resumed(self):
-        print("Bot resumed.")
 
-    async def on_disconnect(self):
-        print("Bot disconnected.")
+@bot.command(name='ping', help='Returns the latency')
+async def ping(ctx):
+    await ctx.send(f'**Pong!** latency: {round(bot.latency * 1000)} ms')
 
-    @tasks.loop(seconds=900)
-    async def change_status(self):
-        # sets status of the bot
-        await self.change_presence(activity=discord.Game(choice(status)))
-        
 
-    async def on_ready(self):
-        self.client_id = (await self.application_info()).id
-        self.change_status.start()
-        print('We have logged in as {0.user}'.format(self))
-        print("Bot ready.")
+@bot.command(name='credit', aliases=["dev"], help='developer info')
+async def dev(ctx):
+    await ctx.send('Developed with love by HumanExtreme#8178')
 
-    async def prefix(self, bot, msg):
-        return commands.when_mentioned_or(".")(bot, msg)
 
-    async def process_commands(self, msg):
-        ctx = await self.get_context(msg, cls=commands.Context)
+@bot.command(name='num', help='total number of server this bot is in')
+async def num(ctx):
+    await ctx.send(f"I'm in {len(bot.guilds)} servers!")
 
-        if ctx.command is not None:
-            await self.invoke(ctx)
 
-    async def on_message(self, msg):
-        if not msg.author.bot:
-            await self.process_commands(msg)
+# @bot.command()
+# async def egg(ctx):
+#     await ctx.send('Fun games cooking in wizard kitchen!')
 
-    '''@commands.command(name="ping", help='Returns the latency')
-    async def ping(self, ctx):
-        await ctx.send(f'**Pong!** latency:{round(self.latency * 1000)} ms')'''
 
-    @commands.command(name='hello', help='Returns the welcome message')
-    async def hello(ctx):
-        await ctx.send(choice(welcome))
+@bot.event
+async def shutdown():
+    print("Closing connection to Discord...")
 
-    @commands.command(name='credits', help='Returns the credits')
-    async def hello(ctx):
-        await ctx.send('Developed with love by dbj & HumanExtreme')
+
+@bot.event
+async def close():
+    print("Closing on keyboard interrupt...")
+
+
+@bot.event
+async def on_connect():
+    print(f" Connected to Discord (latency: {bot.latency * 1000:,.0f} ms).")
+
+
+for i in exts:
+    bot.load_extension(i)
+
+print("Running bot...")
+bot.run('Nzg5Mzk2MzYxMDczNzg2OTIw.X9xcpg.U3ICA02T8phEUk0EW17wSRsCqeI', reconnect=True)
+
+# os.environ['TOKEN']
