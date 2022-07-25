@@ -70,6 +70,6 @@ for i in exts:
     bot.load_extension(i)
 
 print("Running bot...")
-bot.run('Nzg5Mzk2MzYxMDczNzg2OTIw.X9xcpg.U3ICA02T8phEUk0EW17wSRsCqeI', reconnect=True)
+bot.run(OS.environ[TOKEN], reconnect=True)
 
 # os.environ['TOKEN']
