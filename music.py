@@ -153,7 +153,7 @@ class MusicPlayer(commands.Cog, name='Music'):
         """
         Get info from youtube
         """
-        API_KEY = 'AIzaSyDb5XDkK6AWRlvGDdVE3oEJvZveDfYAo44'
+        API_KEY = 'HIDDEN'
         youtube = build('youtube', 'v3', developerKey=API_KEY)
         song_data = youtube.search().list(part='snippet').execute()
         return song_data[0]
